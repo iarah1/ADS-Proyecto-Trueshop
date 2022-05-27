@@ -1,0 +1,97 @@
+﻿@{
+    Layout = null;
+
+    var pedido = new List<TiendaVirtual.Models.PickingPedidoDetalle>();
+    pedido = (List<TiendaVirtual.Models.PickingPedidoDetalle>)ViewBag.DetallePedido;
+
+    string pedidoId = Convert.ToString(pedido[0].PedidoId);
+}
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <style>
+        body {
+            background-color: white;
+        }
+
+        .row * {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+        }
+
+        .row-producto {
+            border-radius: 8px;
+            background: aliceblue;
+        }
+    </style>
+
+</head>
+<body>
+
+    <h2 class="ml-2"># Pedido: @pedidoId </h2>
+
+    <div class="row ml-2 mr-1">
+        <div class="row mr-0 pr-0 pedido" id="pedido">
+
+            @{
+                foreach (var p in pedido)
+                {
+                        <div class="row mb-1 ml-2 mr-2 p-2 border border-secondary row-producto" id="@p.ProductId">
+                            <div class="col p-1 border-bottom">Location: @p.LocationCode</div>
+                            <div class="col p-1 border-bottom">UPC: @p.UpcCode</div>
+                            <div class="w-100"></div>
+                            <div class="col p-1 border-bottom">Producto: @p.ProductName</div>
+                            <div class="w-100"></div>
+                            <div class="col p-1 border-bottom">Cantidad: @p.Cantidad</div>
+                            <div class="col p-1 border-bottom">
+
+                                <div class="input-group">
+                                    <span class="input-group-prepend">
+                                        <button type="button" class="btn btn-secondary btn-number" data-type="minus">
+                                            -
+                                        </button>
+                                    </span>
+                                    <input type="number" id="qty-product-@p.ProductId" class="form-control text-center border-0" placeholder="Cantidad" value="0">
+                                    <span class="input-group-append">
+                                        <button type="button" class="btn btn-secondary btn-number" data-type="plus">
+                                            +
+                                        </button>
+                                    </span>
+                                </div>
+                            </div> 
+                            <div class="w-100"></div>
+                        </div>
+                }
+            }
+
+            <div class="row mb-1 ml-2 mr-2 p-1 d-flex justify-content-center">
+                <a class="btn btn-success mb-1" href="#" role="button">Finalizar</a>
+                <a class="btn btn-warning" href="#" role="button">En Pausa</a>
+  
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
+
+
+

@@ -1,0 +1,202 @@
+﻿
+@{
+    ViewBag.Title = "Carrito";
+}
+
+
+
+<div class="row ml-2 mr-2 mb-5" id="carrito-main">
+    <div class="row ml-2 mt-4 mb-3">
+        <h2>Carrito de compras</h2>
+    </div>
+    <div class="col-sm-7" id="detalle-carrito">
+        <div class="row ">
+            <div class="row cart-header mb-2" id="cart-header">
+                <div class="col-sm-6 col-header">Artículo</div>
+                <div class="col-sm-2 col-header">Cantidad</div>
+                <div class="col-sm-2 col-header">Precio</div>
+                <div class="col-sm-2 col-header">Total</div>
+            </div>
+            <div class="row cart-detalle" id="cart-detalle">
+            </div>
+            <div class="row cart-total mt-4 mb-5" id="cart-total">
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-5" id="cliente-info">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="lblnombres">Nombres:</label>
+                <input type="text" class="form-control" id="nombres">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="lblapellidos">Apellidos:</label>
+                <input type="text" class="form-control" id="apellidos">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="lblemail">Email:</label>
+                <input type="email" class="form-control" id="email">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="lbltelefono">Teléfono:</label>
+                <input type="text" class="form-control" id="telefono">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputAddress">Dirección:</label>
+            <input type="text" class="form-control" id="direccion">
+        </div>
+        <button type="button" class="btn btn-success mt-4" onclick="fnProcesarOrden()">Procesar Orden</button>
+
+    </div>
+</div>
+    <div class="container" id="carrito-respuesta" style="display: none;">
+        <div class="row m-5 p-2 justify-content-center">
+            <div class="col-12 mt-4 mb-5 text-center">
+                <img src="~/Image/Gracias.jpg" />
+            </div>
+        </div>
+    </div>
+
+    @section scripts{
+        @Scripts.Render("~/Scripts/jquery.unobtrusive-ajax.min.js")
+    }
+    <script type="text/javascript">
+        var ProductInfo = [];
+        var localOrder = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+
+
+
+            let lsOrder = localStorage.getItem("localOrder");
+            if (lsOrder != undefined && lsOrder != null) {
+                localOrder = JSON.parse(lsOrder);
+                fnObtenerListaProductos();
+            }
+        });
+
+        function fnObtenerListaProductos() {
+            let productId = [];
+            localOrder.forEach((aValue, aIndex) => {
+                productId.push(aValue.ProductId);
+            });
+
+            let productIds = String(productId.join(','));
+
+            $.ajax({
+                type: "POST",
+                url: '/Home/GetListProduct',
+                data: JSON.stringify({ "productIds": productIds }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    ProductInfo = JSON.parse(response);
+
+                    fnCrearDetalleCarrito();
+                },
+                failure: function (response) {
+                    alert(response.responseText);
+                },
+                error: function (response) {
+                    alert(response.responseText);
+                }
+            });
+
+        }
+
+
+        function fnCrearDetalleCarrito() {
+            let totalOrder = 0;
+            ProductInfo.forEach((aValue, aIndex) => {
+                let Qty = 0;
+                let existsProduct = localOrder.findIndex(p => p.ProductId == aValue.ProductId);
+                if (existsProduct >= 0) {
+                    Qty = parseInt(localOrder[existsProduct].Qty);
+                }
+
+                if (Qty > 0) {
+                    totalOrder = totalOrder + (Qty * parseFloat(aValue.Price))
+
+                    let row = '<div class="col-sm-6 col-detalle">' + aValue.ProductName + '</div>' +
+                        '<div class="col-sm-2 col-detalle">' + Qty + '</div>' +
+                        '<div class="col-sm-2 col-detalle">$' + parseFloat(aValue.Price).toFixed(2) + '</div>' +
+                        '<div class="col-sm-2 col-detalle">$' + parseFloat(Qty * parseFloat(aValue.Price)).toFixed(2) + '</div>' +
+                        '<div class="w-100"></div>'
+                    $("#cart-detalle").append(row);
+
+                }
+            });
+
+            let rowTotal = '<div class="col-sm-10 col-detalle">Total:</div>' +
+                '<div class="col-sm-2 col-detalle" id="total-pedido">$' + parseFloat(totalOrder).toFixed(2) + '</div>'
+            $("#cart-total").append(rowTotal);
+        }
+
+
+        function fnProcesarOrden() {
+            let lblTotal = document.getElementById("total-pedido").textContent;
+            let totalPedido = parseFloat(lblTotal.replace("$", "")).toFixed(2);
+
+            let clienteInfo = {
+                "Nombres": document.getElementById("nombres").value,
+                "Apellidos": document.getElementById("apellidos").value,
+                "Direccion": document.getElementById("direccion").value,
+                "Email": document.getElementById("email").value,
+                "Telefono": document.getElementById("telefono").value,
+                "TotalPedido": parseFloat(totalPedido),
+            };
+
+            let pedidoDetalle = [];
+
+            localOrder.forEach((aValue, aIndex) => {
+                pedidoDetalle.push({ "ProductId": parseInt(aValue.ProductId), "Cantidad": parseInt(aValue.Qty) });
+            });
+
+            let Pedido = { "cliente": clienteInfo, "detalle": pedidoDetalle };
+
+            $.ajax({
+                type: "POST",
+                url: '/Home/ProcesarOrden',
+                data: JSON.stringify(Pedido),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    console.log(response)
+
+                    localOrder = [];
+                    ProductInfo = [];
+                    //Limpiamos localStorage
+                    localStorage.setItem("localOrder", "");
+
+                    $("#carrito-main").hide();
+                    $("#carrito-respuesta").show();
+
+                },
+                failure: function (response) {
+                    alert(response.responseText);
+                },
+                error: function (response) {
+                    alert(response.responseText);
+                }
+            });
+
+           
+        }
+
+
+
+
+    </script>
+
+    <style>
+        .cart-header * {
+            font-size: x-large;
+        }
+
+        .cart-total * {
+            font-size: large;
+        }
+    </style>

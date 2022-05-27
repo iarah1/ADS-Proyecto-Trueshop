@@ -1,0 +1,124 @@
+﻿
+@{
+    var products = new List<TiendaVirtual.Models.Product>();
+    products = (List<TiendaVirtual.Models.Product>)ViewBag.Products;
+
+    int total_products = products.Count;
+
+    int currentPage = Convert.ToInt32(Session["CurrentPage"]);
+    int nextPage = (currentPage + 1);
+    int previousPage = (currentPage - 1);
+}
+
+<div class="row">
+    @{
+
+        string card_group = "<div class='card-group mt-1'>";
+        string end_group = "</div>";
+
+        int limit = 1;
+        int total = 1;
+        foreach (var p in products)
+        {
+            if (limit == 1)
+            {
+                @Html.Raw(card_group);
+            }
+
+            <div class="card">
+                <img class="card-img-top image-catalog" src="@p.ImageUrl" alt="Card image cap">
+                <div class="card-body">
+                    <h6 class="card-title">@p.ProductName</h6><div class="row d-flex justify-content-center">
+                        <div class="col-sm-8">
+                            <div class="input-group">
+
+                                <div class="badge bg-dark fs-6 text-center pt-2 mr-2" style="width: 6rem;">
+                                    $ @p.Price
+                                </div>
+
+                                <input type="number" id="qty-product-@p.ProductId" class="form-control  " placeholder="Cantidad">
+                                <div class="input-group-append ml-2">
+                                    <button class="btn btn-outline-secondary " id="btn-product-@p.ProductId" type="button" onclick="fn_AgregarProductos(@p.ProductId)">Agregar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            if (limit == 3 || total == total_products)
+            {
+                @Html.Raw(end_group);
+                limit = 0;
+            }
+            limit++;
+            total++;
+        }
+
+    }
+</div>
+
+<style>
+
+    .image-catalog {
+        object-fit: contain;
+        object-position: center;
+        height: 300px;
+        margin-top: 5px;
+    }
+</style>
+
+<script type="text/javascript">
+    var localOrder = [];
+    var Products = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        Products = @Html.Raw(Json.Encode(@products));
+
+        let lsOrder = localStorage.getItem("localOrder");
+        if (lsOrder != undefined && lsOrder != null) {
+            localOrder = JSON.parse(lsOrder);
+        }
+
+        fn_CargarCantidades();
+
+    });
+
+    function fn_CargarCantidades(){
+        Products.forEach((aValue, aIndex) => {
+            let eProduct = 'qty-product-' + aValue.ProductId;
+
+            let existsProduct = localOrder.findIndex(p => p.ProductId == aValue.ProductId);
+            if (existsProduct >= 0) {
+                let Qty = localOrder[existsProduct].Qty;
+                document.getElementById(eProduct).value = parseInt(Qty);
+            }
+        });
+    }
+
+    function fn_AgregarProductos(ProductId) {
+
+        let eQty = String('qty-product-' + ProductId);
+        let Qty = document.getElementById(eQty).value;
+
+        let existsProduct = localOrder.findIndex(p => p.ProductId == ProductId);
+
+        // Modificamos la cantidad si ya existe, si no agregamos el producto con la cantidad 
+        if (existsProduct >= 0) {
+            localOrder[existsProduct].Qty = parseInt(Qty);
+        }
+        else {
+            let addObject = { ProductId: ProductId, Qty: parseInt(Qty) };
+            localOrder.push(addObject);
+        }
+
+        localStorage.setItem("localOrder", JSON.stringify(localOrder));
+
+    }
+
+    
+
+
+
+</script>
